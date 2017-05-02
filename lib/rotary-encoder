@@ -5,25 +5,25 @@ var cmd = mpd.cmd;
 
 module.exports = RotaryEncoder;
 
-function RotaryEncoder(a, b,client){
-	this.a = a;	// clk
-	this.b = b;     // dt
+function RotaryEncoder(clk, dt,client){
+	this.clk = clk;
+	this.dt = dt;
 	this.client = client;
 	
 	this.getVolume();
 
 	rpio.init({mapping:'gpio'});
-	rpio.open(this.a,rpio.INPUT,rpio.PULL_DOWN);
-	rpio.open(this.b,rpio.INPUT,rpio.PULL_DOWN);
+	rpio.open(this.clk,rpio.INPUT,rpio.PULL_DOWN);
+	rpio.open(this.dt,rpio.INPUT,rpio.PULL_DOWN);
 
-	rpio.poll(this.b, function(pin){
-		if(rpio.read(this.b) == 1){
+	rpio.poll(this.dt, function(pin){
+		if(rpio.read(this.dt) == 1){
 			
 			if(this.start) {
 				this.time = new Date() - this.start;
 			}
 
-			if(rpio.read(this.a) == 0){
+			if(rpio.read(this.clk) == 0){
 				this.incVol(this.time);
 			}else {
 				this.decVol(this.time);
@@ -38,7 +38,6 @@ RotaryEncoder.prototype.setValue = function(value){
 	this.value = value;
 }
 RotaryEncoder.prototype.getVolume = function(){
-	//console.log("Get Volume()");
 	this.client.sendCommand(cmd('status',[]),function(err,msg){
 		if(err) console.log(err);
 		else {
@@ -47,7 +46,6 @@ RotaryEncoder.prototype.getVolume = function(){
 	}.bind(this));	
 }
 RotaryEncoder.prototype.setVolume = function() {
-	//console.log(typeof this.value + " value: "+this.value );
 	this.client.sendCommand(cmd('setvol',[this.value]),null);
 }
 RotaryEncoder.prototype.incVol = function(lastTime) {
@@ -113,5 +111,4 @@ RotaryEncoder.prototype.decVol = function(lastTime) {
                 }
         }
         this.setVolume();
-
 }

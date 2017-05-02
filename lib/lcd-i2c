@@ -1,31 +1,14 @@
-//var i2c = require('i2c-bus');
 var rpio = require('rpio');
 
-var CLEAR	= 0x01;
-var HOME	= 0x02;
-var ENTRYMODESET= 0x04;
-var DISPLAYCONTROL = 0x08;
-var CURSORSHIFT = 0x10;
-var FUNCTIONSET = 0x20;
-var SETCGRAMADDR = 0x40;
-var SETDDRAMADDR = 0x80;
+var CMDS = {};
+CMDS.CLEAR	= 0x01;
+CMDS.HOME	= 0x02;
+CMDS.DISPLAYCONTROL = 0x08;
+CMDS.SETCGRAMADDR = 0x40;
+CMDS.SETDDRAMADDR = 0x80;
 
-var ENTRYRIGHT = 0x00;
-var ENTRYLEFT = 0x02;
-var ENTRYSHIFTINCREMENT = 0x01;
-var ENTRYSHIFTDECREMENT = 0x00;
-
-var DISPLAYON = 0x04;
-var DISPLAYOFF = 0x00;
-var CURSORON = 0x02;
-var CURSOROFF = 0x00;
-var BLINKON = 0x01;
-var BLINKOFF = 0x00;
-
-var DISPLAYMOVE = 0x08;
-var CURSORMOVE = 0x00;
-var MOVERIGHT = 0x04;
-var MOVELEFT = 0x00;
+CMDS.DISPLAYON = 0x04;
+CMDS.DISPLAYOFF = 0x00;
 
 var LINEADDRESS = [];
 LINEADDRESS[1] = 0x80;
@@ -51,6 +34,7 @@ var ports = {
 
 function LCD(addr){
 	this.addr = addr;
+	
 	rpio.init({gpiomem:false});
 	rpio.i2cBegin();
 	rpio.i2cSetSlaveAddress(this.addr);
@@ -80,6 +64,7 @@ LCD.prototype.print = function(str, addr){
 	}else { 
 		for(var i=0; i<str.length; i++){
 			var c = str[i].charCodeAt(0);
+			// Replace ß with s
 			if(c==223){
 				c = 115;
 			}
@@ -94,19 +79,19 @@ LCD.prototype.cprint = function(str, row, col){
 }
 
 LCD.prototype.clear = function(){
-	this.write(0x01,ports.CMD);
+	this.write(CMDS.CLEAR,ports.CMD);
 }
 
 LCD.prototype.off = function(){
 	ports.backlight = 0x00;
-	this.write(DISPLAYCONTROL | DISPLAYOFF, ports.CMD);
+	this.write(CMDS.DISPLAYCONTROL | CMDS.DISPLAYOFF, ports.CMD);
 }
 LCD.prototype.on = function() {
 	ports.backlight = 0x08;
-	this.write(DISPLAYCONTROL | DISPLAYON, ports.CMD);
+	this.write(CMDS.DISPLAYCONTROL | CMDS.DISPLAYON, ports.CMD);
 }
 LCD.prototype.home = function() {
-	this.write(SETDDRAMADDR | 0x00, ports.CMD);
+	this.write(CMDS.SETDDRAMADDR | 0x00, ports.CMD);
 }
 LCD.prototype.clearLine = function(line){
 	for(var i=0;i<16;i++){
