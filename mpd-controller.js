@@ -2,10 +2,9 @@ var mpd = require('mpd');
 var cmd = mpd.cmd;
 
 
-var RotaryEncoder = require('rotary-encoder');
-var Button = require('button');
-
-var LCD = require('lcd-i2c');
+var RotaryEncoder = require('./lib/rotary-encoder');
+var Button = require('./lib/button');
+var LCD = require('./lib/lcd-i2c');
 
 var CLK_PIN = 20;
 var DT_PIN = 21;
