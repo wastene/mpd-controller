@@ -1,0 +1,13 @@
+#!/usr/bin/env node
+
+'use strict';
+
+process.title = 'mpd-controller';
+
+
+var path = require('path');
+var fs = require('fs');
+var mpdDir = path.join(path.dirname(fs.realpathSync(__filename)), '../');
+
+
+require(mpdDir);
