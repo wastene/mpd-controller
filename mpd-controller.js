@@ -39,9 +39,18 @@ function MPDController(){
 	this.encoder = new RotaryEncoder(CLK_PIN,DT_PIN,this.client);
 
 	// Check for volume
-  this.client.on('system-mixer',function(){
+  	this.client.on('system-mixer',function(){
 		this.encoder.getVolume();
-    this.displayVolume();
+    		
+		this.client.sendCommand(cmd('status',[]),function(err,msg){
+			if(err) console.log(err);
+			else {
+				this.volume = mpd.parseKeyValueMessage(msg).volume;
+				this.displayVolume();
+			}
+			
+		}.bind(this));	
+		//this.displayVolume();
 	}.bind(this));
 
 	this.playBtn = new Button(PLAY_PIN, PLAY_FUNC, this.client);
@@ -84,7 +93,7 @@ function MPDController(){
 					this.setCurrentSong();
 
 					this.printTime();
-					clearInterval(this.timeInterId);
+					clearInterval(this.timeInterID);
 					this.timeInterID = setInterval(timeInterval,1000,this);
 				}else {
 					clearInterval(this.timeInterID);
@@ -106,6 +115,7 @@ function intTimeToStr(time){
 	return str;
 }
 
+
 MPDController.prototype.printTime = function(){
 	this.client.sendCommand(cmd('status',[]),function(err,msg){
 		if(err) console.log(err);
@@ -118,25 +128,27 @@ MPDController.prototype.setCurrentSong = function(){
 	this.client.sendCommand(cmd('currentsong',[]),function(err,msg){
 		if(err) console.log(err);
 		else {
-      var title = mpd.parseKeyValueMessage(msg).Title;
-      if(title.length > 16)
-        this.lcd.startScroll(title);
-      else {
-        this.lcd.endScroll();
-        this.lcd.cprint(title, 1,0);
-      }
+      			var title = mpd.parseKeyValueMessage(msg).Title;
+      			if(title.length > 16){
+				this.lcd.clearLine(1);
+        			this.lcd.startScroll(title);
+      			}else {
+        			this.lcd.endScroll();
+				this.lcd.clearLine(1);
+        			this.lcd.cprint(title, 1,0);
+      			}
 		}
 	}.bind(this));
 }
 
 MPDController.prototype.displayVolume = function(){
-  var volume = this.encoder.getValue();
-  volume = volume<10?'  '+volume:volume<100?' '+volume:volume;
-  clearInterval(this.timeInterID);
-  this.lcd.cprint("Vol: "+volume+"%",2,3);
+  	var volume = this.volume;
+  	volume = volume<10?'  '+volume:volume<100?' '+volume:volume;
+  	clearInterval(this.timeInterID);
+  	this.lcd.cprint("Vol: "+volume+"%",2,3);
   
-  clearTimeout(this.volumeID);
-  this.volumeID = setTimeout(function(){
+  	clearTimeout(this.volumeID);
+  	this.volumeID = setTimeout(function(){
     	this.lcd.clearLine(2);
 	this.timeInterID = setInterval(function(){
 		this.printTime();
