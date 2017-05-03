@@ -133,8 +133,9 @@ MPDController.prototype.displayVolume = function(){
   var volume = this.encoder.getValue();
   clearInterval(this.timeInterID);
   this.lcd.cprint("Vol: "+volume+"%",2,2);
-
-  setTimeout(function(){
+  
+  clearTimeout(this.volumeID);
+  this.volumeID = setTimeout(function(){
     this.timeInterID = setInterval(timeInterval,1000);
   }.bind(this),2000);
 
