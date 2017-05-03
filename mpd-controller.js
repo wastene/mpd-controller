@@ -37,34 +37,24 @@ function MPDController(){
 	while(!connect){require('deasync').sleep(5);}
 
 	this.encoder = new RotaryEncoder(CLK_PIN,DT_PIN,this.client);
-	
+
 	// Check for volume
-	this.client.on('system-mixer',function(){
-		this.getVolume();
-		/*
-		this.client.sendCommand(cmd("status",[]),function(err,msg){
-			if(err) console.log(err);
-			else {
-				var response = mpd.parseKeyValueMessage(msg);
-				var volume = response.volume;
-				this.encoder.setValue(volume);
-			}
-		}.bind(this));
-		*/
-		
-	}.bind(this.encoder));
+  this.client.on('system-mixer',function(){
+		this.encoder.getVolume();
+    this.displayVolume();
+	}.bind(this));
 
 	this.playBtn = new Button(PLAY_PIN, PLAY_FUNC, this.client);
 	this.pauseBtn = new Button(PAUSE_PIN, PAUSE_FUNC,this.client);
 	this.nextBtn = new Button(NEXT_PIN, NEXT_FUNC,this.client);
 	this.prevBtn = new Button(PREV_PIN, PREV_FUNC,this.client);
-	
-	
+
+
 
 	this.lcd = new LCD(0x27);
 	this.lcd.clear();
 	this.lcd.off();
-	
+
 	this.client.sendCommand(cmd('status',[]),function(err,msg){
 		if(err) console.log(err);
 		else {
@@ -73,7 +63,7 @@ function MPDController(){
 				this.lcd.on();
 				this.setCurrentSong();
 				this.printTime();
-				
+
 				clearInterval(this.timeInterID);
 				this.timeInterID = setInterval(timeInterval, 1000,this);
 			}else {
@@ -81,7 +71,7 @@ function MPDController(){
 			}
 		}
 	}.bind(this));
-	
+
 	// Check for play/pause and next song
 	this.client.on('system-player',function(){
 
@@ -91,20 +81,20 @@ function MPDController(){
 				var response = mpd.parseKeyValueMessage(msg);
 				if(response.state == 'play'){
 					this.lcd.on();
-					this.setCurrentSong();					
+					this.setCurrentSong();
 
 					this.printTime();
 					clearInterval(this.timeInterId);
 					this.timeInterID = setInterval(timeInterval,1000,this);
 				}else {
 					clearInterval(this.timeInterID);
-						
+
 					this.lcd.off();
 				}
 			}
 		}.bind(this));
 	}.bind(this));
-		
+
 }
 function timeInterval(controller){
 	controller.printTime();
@@ -128,37 +118,26 @@ MPDController.prototype.setCurrentSong = function(){
 	this.client.sendCommand(cmd('currentsong',[]),function(err,msg){
 		if(err) console.log(err);
 		else {
-			var response = mpd.parseKeyValueMessage(msg);
-			this.printToLCD(response.Title);
+      var title = mpd.parseKeyValueMessage(msg).Title;
+      if(title.length > 16)
+        this.lcd.startScroll(title);
+      else {
+        this.lcd.endScroll();
+        this.lcd.cprint(title, 1,0);
+      }
 		}
 	}.bind(this));
 }
-MPDController.prototype.printToLCD = function(str){
-	if(str.length > 16){
 
-		clearInterval(this.lcdID);
-		this.lcdPos = 0;
-		this.lcdID = setInterval(function(lcdStr){
-			
-			if(this.lcdPos >= lcdStr.length) this.lcdPos = 0;
-	
-			var currStr = lcdStr.substr(this.lcdPos, lcdStr.length-this.lcdPos);
-			currStr += '   ';
-			currStr += lcdStr.substr(0, 16);
-			currStr = currStr.substr(0, 16);
-			
-			this.lcd.cprint(currStr,1,0);
-			this.lcdPos++;
+MPDController.prototype.displayVolume = function(){
+  var volume = this.encoder.getValue();
+  clearInterval(this.timeInterID);
+  this.lcd.cprint("Vol: "+volume+"%",2,2);
 
-		}.bind(this),750,str);
+  setTimeout(function(){
+    this.timeInterID = setInterval(timeInterval,1000);
+  }.bind(this),2000);
 
-	}else {
-		clearInterval(this.lcdID);
-		this.lcd.cprint(str,1,0);
 
-		for(var i=str.length; i<=16;i++){
-			this.lcd.print(' ');
-		}
-	}
 }
 module.exports = MPDController;
