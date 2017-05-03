@@ -131,12 +131,16 @@ MPDController.prototype.setCurrentSong = function(){
 
 MPDController.prototype.displayVolume = function(){
   var volume = this.encoder.getValue();
+  volume = volume<10?'  '+volume:volume<100?' '+volume:volume;
   clearInterval(this.timeInterID);
-  this.lcd.cprint("Vol: "+volume+"%",2,2);
+  this.lcd.cprint("Vol: "+volume+"%",2,3);
   
   clearTimeout(this.volumeID);
   this.volumeID = setTimeout(function(){
-    this.timeInterID = setInterval(timeInterval,1000);
+    	this.lcd.clearLine(2);
+	this.timeInterID = setInterval(function(){
+		this.printTime();
+      	}.bind(this),1000);
   }.bind(this),2000);
 
 
